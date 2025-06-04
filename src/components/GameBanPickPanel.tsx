@@ -227,10 +227,10 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
   };
 
   const getBackgroundColor = (): string => {
-    if (currentPhase >= phases.length) return 'from-gray-900 to-gray-800';
+    if (currentPhase >= phases.length) return 'from-stone-900 to-stone-800'; // Gris muy oscuro, casi negro
     return phases[currentPhase].team === 'blue'
-      ? 'from-blue-900/50 to-blue-800/50'
-      : 'from-red-900/50 to-red-800/50';
+      ? 'from-slate-900 to-slate-800' // Un azul cielo muy oscuro y con un poco más de opacidad
+      : 'from-rose-950 to-rose-900'; // Un rojo más apagado y oscuro, casi tirando a granate/vino
   };
 
   // Puedes usar useMemo aquí también si HeroList es grande y selectedRole cambia a menudo
@@ -418,8 +418,8 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
 
           {/* Red Team Side Panel */}
           <div className="w-32 space-y-4">
-            <div className="bg-red-900/30 p-4 rounded">
-              <h3 className="text-red-400 font-bold mb-4">{language === 'eng' ? 'Red Team' : '红方'} </h3>
+            <div className="bg-rose-900/40 p-4 rounded">
+              <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Red Team' : '红方'} </h3>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用'} </h4>
