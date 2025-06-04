@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import HeroList from './HeroList';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import HeroList from './HeroList'; // Asegúrate de que HeroList exporte un array de objetos Hero
 
-// Type definitions
+// Type definitions (estas están perfectas)
 interface Hero {
   id: number;
   chineseName: string;
@@ -41,8 +41,7 @@ interface Recommendations {
   combos: number[];
   counters: number[];
   beCountered: number[];
-  enemyBeCountered: number[]; // 新添加的属性，存储克制对方英雄的推荐
-
+  enemyBeCountered: number[];
 }
 
 const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
@@ -67,15 +66,15 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
     { id: 'ADC', name: '发育路', englishName: 'ADC' },
   ];
 
-  const handleLanguage = ()=>{
+  const handleLanguage = () => {
     setLanguage(prevLanguage => (prevLanguage === 'eng' ? 'zh' : 'eng'));
-  }
+  };
 
   useEffect(() => {
     if (currentPhase < phases.length) {
       setUserTeam(phases[currentPhase].team);
     }
-  }, [currentPhase]);
+  }, [currentPhase, phases]); // Añadir 'phases' a las dependencias de useEffect
 
   const handleChampionClick = (championId: number): void => {
     if (currentPhase >= phases.length) return;
@@ -101,7 +100,7 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
 
   const handleUndo = (): void => {
     if (history.length === 0) return;
-    
+
     const lastState = history[history.length - 1];
     setSelectedHeroes(lastState.selectedHeroes);
     setCurrentPhase(lastState.currentPhase);
@@ -118,28 +117,28 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
     });
     setSelectedRole('all');
     setHistory([]);
-    setResetCounter(prev => prev + 1); // Force re-render with a new key
-
+    setResetCounter(prev => prev + 1);
   };
 
-  const getHeroById = (id: number): Hero | undefined => 
-    HeroList.find(hero => hero.id === id);
+  // Memoriza estas funciones para que no se re-creen en cada render
+  const getHeroById = useCallback((id: number): Hero | undefined =>
+    HeroList.find(hero => hero.id === id),
+    []
+  );
 
-  const getTeamPicks = (team: 'blue' | 'red'): number[] => {
+  const getTeamPicks = useCallback((team: 'blue' | 'red'): number[] => {
     return team === 'blue' ? selectedHeroes.bluePicks : selectedHeroes.redPicks;
-  };
+  }, [selectedHeroes]);
 
-  const getRecommendations = (): Recommendations => {
+  // Usa useMemo para calcular las recomendaciones una sola vez por render
+  const recommendations = useMemo(() => {
     const currentTeamPicks = getTeamPicks(userTeam);
     const enemyTeamPicks = getTeamPicks(userTeam === 'blue' ? 'red' : 'blue');
-
-    // 获取已禁用的英雄
     const bannedHeroes = [
       ...selectedHeroes.blueBans,
       ...selectedHeroes.redBans
     ];
 
-    // 如果双方都没有选英雄，不返回推荐
     if (currentTeamPicks.length === 0 && enemyTeamPicks.length === 0) {
       return {
         combos: [],
@@ -149,7 +148,7 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
       };
     }
 
-    const recommendations: Recommendations = {
+    const recs: Recommendations = {
       combos: [],
       counters: [],
       beCountered: [],
@@ -161,14 +160,13 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
     const addedBeCountered = new Set<number>();
     const addedEnemyBeCountered = new Set<number>();
 
-    // 处理当前队伍的英雄推荐
     currentTeamPicks.forEach(heroId => {
       const hero = getHeroById(heroId);
       if (hero) {
         if (hero.combo) {
           hero.combo.forEach(id => {
             if (!bannedHeroes.includes(id) && !addedCombos.has(id)) {
-              recommendations.combos.push(id);
+              recs.combos.push(id);
               addedCombos.add(id);
             }
           });
@@ -176,7 +174,7 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
         if (hero.counter) {
           hero.counter.forEach(id => {
             if (!bannedHeroes.includes(id) && !addedCounters.has(id)) {
-              recommendations.counters.push(id);
+              recs.counters.push(id);
               addedCounters.add(id);
             }
           });
@@ -184,7 +182,7 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
         if (hero.beCountered) {
           hero.beCountered.forEach(id => {
             if (!bannedHeroes.includes(id) && !addedBeCountered.has(id)) {
-              recommendations.beCountered.push(id);
+              recs.beCountered.push(id);
               addedBeCountered.add(id);
             }
           });
@@ -192,21 +190,20 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
       }
     });
 
-    // 处理对方队伍的英雄被克制情况
     enemyTeamPicks.forEach(heroId => {
       const hero = getHeroById(heroId);
       if (hero && hero.beCountered) {
         hero.beCountered.forEach(id => {
           if (!bannedHeroes.includes(id) && !addedEnemyBeCountered.has(id)) {
-            recommendations.enemyBeCountered.push(id);
+            recs.enemyBeCountered.push(id);
             addedEnemyBeCountered.add(id);
           }
         });
       }
     });
 
-    return recommendations;
-  };
+    return recs;
+  }, [selectedHeroes, userTeam, getHeroById, getTeamPicks]);
 
 
   const isChampionSelected = (championId: number): boolean => {
@@ -231,36 +228,40 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
 
   const getBackgroundColor = (): string => {
     if (currentPhase >= phases.length) return 'from-gray-900 to-gray-800';
-    return phases[currentPhase].team === 'blue' 
+    return phases[currentPhase].team === 'blue'
       ? 'from-blue-900/50 to-blue-800/50'
       : 'from-red-900/50 to-red-800/50';
   };
 
-  const filteredHeroes = HeroList.filter(item => 
-    selectedRole === 'all' || item.occupation === selectedRole || item.altOccupation === selectedRole
-  );
+  // Puedes usar useMemo aquí también si HeroList es grande y selectedRole cambia a menudo
+  const filteredHeroes = useMemo(() => {
+    return HeroList.filter(item =>
+      selectedRole === 'all' || item.occupation === selectedRole || item.altOccupation === selectedRole
+    );
+  }, [selectedRole, HeroList]); // HeroList as a dependency if it could change, otherwise omit
 
-  const getRecommendationSources = (heroId: number, currentTeamPicks: number[]): string[] => {
+  const getRecommendationSources = useCallback((heroId: number, currentTeamPicks: number[]): string[] => {
     return currentTeamPicks
       .map(pickId => {
         const hero = getHeroById(pickId);
-        if (hero&&language==='zh') {
-          if (hero.combo && hero.combo.includes(heroId)) return hero.chineseName;
-          if (hero.counter && hero.counter.includes(heroId)) return hero.chineseName;
-          if (hero.beCountered && hero.beCountered.includes(heroId)) return hero.chineseName;
-        }
-        if (hero&&language==='eng') {
-          if (hero.combo && hero.combo.includes(heroId)) return hero.englishName;
-          if (hero.counter && hero.counter.includes(heroId)) return hero.englishName;
-          if (hero.beCountered && hero.beCountered.includes(heroId)) return hero.englishName;
+        if (hero) {
+          if (language === 'zh') {
+            if (hero.combo && hero.combo.includes(heroId)) return hero.chineseName;
+            if (hero.counter && hero.counter.includes(heroId)) return hero.chineseName;
+            if (hero.beCountered && hero.beCountered.includes(heroId)) return hero.chineseName;
+          } else { // language === 'eng'
+            if (hero.combo && hero.combo.includes(heroId)) return hero.englishName;
+            if (hero.counter && hero.counter.includes(heroId)) return hero.englishName;
+            if (hero.beCountered && hero.beCountered.includes(heroId)) return hero.englishName;
+          }
         }
         return null;
       })
       .filter((name): name is string => name !== null);
-  };
+  }, [getHeroById, language]); // Depende de getHeroById y language
+
 
   return (
-	
     <div className={`min-h-screen bg-gradient-to-b ${getBackgroundColor()} p-4 transition-all duration-500 w-[100vw] flex flex-row`} key={resetCounter}>
       <div className='w-[80%]'>
         {/* Header Controls */}
@@ -272,7 +273,7 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
                 userTeam === 'blue' ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
               }`}
             >
-              {language == 'eng'?'Blue Team':'蓝色方'}
+              {language === 'eng' ? 'Blue Team' : '蓝色方'}
             </button>
             <button
               onClick={() => setUserTeam('red')}
@@ -280,32 +281,31 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
                 userTeam === 'red' ? 'bg-red-500 text-white' : 'bg-gray-700 text-gray-300'
               }`}
             >
-              {language == 'eng'?'Red Team':'红色方'}   
+              {language === 'eng' ? 'Red Team' : '红色方'}
             </button>
           </div>
           <div className="text-white text-xl font-bold">
             {getCurrentActionText()}
           </div>
           <div className="flex gap-4">
-            <button className={`px-4 py-2 rounded transition-colors duration-300 bg-blue-600`} onClick={handleLanguage}> <span className={`${language==='eng'? 'text-black':'text-gray-700'}`}>English</span> / <span className={`${language==='zh'?'text-black':'text-gray-700'}`}>中文</span></button>
+            <button className={`px-4 py-2 rounded transition-colors duration-300 bg-blue-600`} onClick={handleLanguage}> <span className={`${language === 'eng' ? 'text-black' : 'text-gray-700'}`}>English</span> / <span className={`${language === 'zh' ? 'text-black' : 'text-gray-700'}`}>中文</span></button>
 
             <button
               onClick={handleUndo}
               disabled={history.length === 0}
               className={`px-4 py-2 rounded transition-colors duration-300 ${
-                history.length > 0 
-                  ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                history.length > 0
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
                   : 'bg-gray-600 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {language == 'eng'?'Undo':'撤销'}   
+              {language === 'eng' ? 'Undo' : '撤销'}
             </button>
             <button
               onClick={resetDraft}
               className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors duration-300"
             >
-              {language == 'eng'?'Reset Draft':'重置'}   
-
+              {language === 'eng' ? 'Reset Draft' : '重置'}
             </button>
           </div>
         </div>
@@ -317,13 +317,12 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
               key={role.id}
               onClick={() => setSelectedRole(role.id)}
               className={`px-4 py-2 rounded transition-colors duration-300 ${
-                selectedRole === role.id 
-                  ? 'bg-purple-500 text-white' 
+                selectedRole === role.id
+                  ? 'bg-purple-500 text-white'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              {language == 'eng'?role.englishName:role.name}   
-
+              {language === 'eng' ? role.englishName : role.name}
             </button>
           ))}
         </div>
@@ -333,17 +332,17 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
           {/* Blue Team Side Panel */}
           <div className="w-32 space-y-4">
             <div className="bg-blue-900/30 p-4 rounded">
-              <h3 className="text-blue-400 font-bold mb-4">{language == 'eng'?'Blue Team':'蓝方'}   
+              <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Blue Team' : '蓝方'}
               </h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-red-500 font-bold mb-2">{language == 'eng'?'Bans':'禁用'}  </h4>
+                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用'}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedHeroes.blueBans.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
                         <div key={id} className="aspect-square bg-gray-700 rounded overflow-hidden opacity-50">
-                          <img                   src={`/heroesImg/${hero.id}.png`} 
+                          <img src={`/heroesImg/${hero.id}.png`}
                             alt={hero.englishName} className="w-full h-full object-cover" />
                         </div>
                       );
@@ -351,14 +350,14 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-green-500 font-bold mb-2">{language == 'eng'?'Picks':'选择'} </h4>
+                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks' : '选择'} </h4>
                   <div className="grid grid-cols-1 gap-2">
                     {selectedHeroes.bluePicks.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
                         <div key={id} className="w-[48px] h-[48px] rounded-md border border-white shadow-sm">
-                          <img   src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
-                        </div> )
+                          <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
+                        </div>)
                     })}
                   </div>
                 </div>
@@ -370,32 +369,33 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
           <div className="flex-1">
             <div className="grid grid-cols-9 gap-1">
               {filteredHeroes.map(item => (
-                <div 
+                <div
                   key={item.id}
-                  onClick={() => !isChampionSelected(item.id) && isUserTurn() && handleChampionClick(item.id)}
+                  onClick={() => { // Corrección del error de sintaxis aquí
+                    if (!isChampionSelected(item.id) && isUserTurn()) {
+                      handleChampionClick(item.id);
+                    }
+                  }}
                   className={`
-						relative aspect-square w-[80px] overflow-hidden transition-all
-						${isChampionSelected(item.id) 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : isUserTurn() 
-                    ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500 bg-gray-700/50' 
-                    : 'cursor-not-allowed bg-gray-900/50'
-                }
-						`}
+            relative aspect-square w-[80px] overflow-hidden transition-all
+            ${isChampionSelected(item.id)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : isUserTurn()
+                        ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500 bg-gray-700/50'
+                        : 'cursor-not-allowed bg-gray-900/50'
+                    }
+            `}
                 >
-                  <img 
-                    src={`/heroesImg/${item.id}.png`} 
+                  <img
+                    src={`/heroesImg/${item.id}.png`}
                     alt={item.chineseName}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
                     <div className="flex flex-col">
                       <span className="text-xs text-white font-bold">
-                        {language==='eng'?item.englishName:item.chineseName}
+                        {language === 'eng' ? item.englishName : item.chineseName}
                       </span>
-                      {/* <span className="text-xs text-gray-300">
-							{roles.find(r => r.id === item.occupation)?.name}
-							</span> */}
                     </div>
                   </div>
                 </div>
@@ -408,8 +408,8 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
                 phases[currentPhase]?.team === 'blue' ? 'bg-blue-900/30' : 'bg-red-900/30'
               }`}>
                 <span className="text-white font-bold">
-                  {currentPhase >= phases.length 
-                    ? 'Draft Complete!' 
+                  {currentPhase >= phases.length
+                    ? 'Draft Complete!'
                     : `${isUserTurn() ? 'Your' : 'Opponent\'s'} turn - ${getCurrentActionText()}`}
                 </span>
               </div>
@@ -419,16 +419,16 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
           {/* Red Team Side Panel */}
           <div className="w-32 space-y-4">
             <div className="bg-red-900/30 p-4 rounded">
-              <h3 className="text-red-400 font-bold mb-4">{language == 'eng'?'Red Team':'红方'}   </h3>
+              <h3 className="text-red-400 font-bold mb-4">{language === 'eng' ? 'Red Team' : '红方'} </h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-red-500 font-bold mb-2">{language == 'eng'?'Bans':'禁用'} </h4>
+                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用'} </h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedHeroes.redBans.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
                         <div key={id} className="aspect-square bg-gray-700 rounded overflow-hidden opacity-50">
-                          <img                   src={`/heroesImg/${hero.id}.png`} 
+                          <img src={`/heroesImg/${hero.id}.png`}
                             alt={hero.englishName} className="w-full h-full object-cover" />
                         </div>
                       );
@@ -436,14 +436,14 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-green-500 font-bold mb-2">{language == 'eng'?'Picks':'选择'} </h4>
+                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks' : '选择'} </h4>
                   <div className="grid grid-cols-1 gap-2">
                     {selectedHeroes.redPicks.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
                         <div key={id} className="w-[48px] h-[48px] rounded-md border border-white shadow-sm">
-                          <img   src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
-                        </div> )
+                          <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
+                        </div>)
                     })}
                   </div>
                 </div>
@@ -453,32 +453,34 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
         </div>
       </div>
       {/* Recommendation Panel */}
-      {/* Recommendation Panel */}
       <div className="w-[260px] ml-auto mr-6 bg-gray-800/50 rounded-lg p-2">
         <h2 className="text-white font-bold text-xl mb-4">Recommendations</h2>
-        {getRecommendations() ? (
+        {/* Condición mejorada para mostrar recomendaciones */}
+        {recommendations.combos.length > 0 || recommendations.counters.length > 0 || recommendations.beCountered.length > 0 || recommendations.enemyBeCountered.length > 0 ? (
           <div className="space-y-6">
             {/* 新添加的对方英雄被克制部分 */}
             <div>
-              <h3 className="text-purple-400 font-bold mb-2">{language==='eng'?`El enemigo es contrarrestado por`:'对方英雄被以下英雄克制'}</h3>
+              <h3 className="text-purple-400 font-bold mb-2">{language === 'eng' ? `El enemigo es contrarrestado por` : '对方英雄被以下英雄克制'}</h3>
               <div className="grid grid-cols-3 gap-2">
-                {getRecommendations().enemyBeCountered.map(heroId => {
+                {recommendations.enemyBeCountered.map(heroId => {
                   const hero = getHeroById(heroId);
                   const enemyTeam = userTeam === 'blue' ? 'red' : 'blue';
+                  // Usa la función memorizada
                   const sources = getRecommendationSources(heroId, getTeamPicks(enemyTeam));
                   return hero && (
                     <div key={heroId} className="flex flex-col items-center">
                       <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
-                        <img 
+                        <img
                           src={`/heroesImg/${hero.id}.png`}
                           alt={hero.englishName}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="mt-1 text-xs text-gray-300 text-center">
-                        <div>{language==='eng'?hero.englishName:hero.chineseName}</div>
+                        <div>{language === 'eng' ? hero.englishName : hero.chineseName}</div>
                         <div className="text-purple-400">
-                          {language === 'eng' ? `Counter: ${sources.join(', ')}` : `克制: ${sources.join(', ')}`}                    </div>
+                          {language === 'eng' ? `Counter: ${sources.join(', ')}` : `克制: ${sources.join(', ')}`}
+                        </div>
                       </div>
                     </div>
                   );
@@ -486,24 +488,24 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
               </div>
             </div>
 
-
             <div>
-              <h3 className="text-red-400 font-bold mb-2">{language==='eng'?'Somos contrarrestados por':'我方被以下英雄克制'}</h3>
+              <h3 className="text-red-400 font-bold mb-2">{language === 'eng' ? 'Somos contrarrestados por' : '我方被以下英雄克制'}</h3>
               <div className="grid grid-cols-3 gap-2">
-                {getRecommendations().beCountered.map(heroId => {
+                {recommendations.beCountered.map(heroId => {
                   const hero = getHeroById(heroId);
+                  // Usa la función memorizada
                   const sources = getRecommendationSources(heroId, getTeamPicks(userTeam));
                   return hero && (
                     <div key={heroId} className="flex flex-col items-center">
                       <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
-                        <img 
+                        <img
                           src={`/heroesImg/${hero.id}.png`}
                           alt={hero.englishName}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="mt-1 text-xs text-gray-300 text-center">
-                        {language==='eng'?<div>{hero.englishName}</div>:<div>{hero.chineseName}</div>}
+                        {language === 'eng' ? <div>{hero.englishName}</div> : <div>{hero.chineseName}</div>}
                         <div className="text-red-400">
                           {language === 'eng' ? `Counter: ${sources.join(', ')}` : `克制: ${sources.join(', ')}`}
                         </div>
@@ -515,22 +517,23 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
             </div>
 
             <div>
-              <h3 className="text-green-400 font-bold mb-2">{language==='eng'?'Combos y Sinergias':'好配合'}</h3>
+              <h3 className="text-green-400 font-bold mb-2">{language === 'eng' ? 'Combos y Sinergias' : '好配合'}</h3>
               <div className="grid grid-cols-3 gap-2">
-                {getRecommendations().combos.map(heroId => {
+                {recommendations.combos.map(heroId => {
                   const hero = getHeroById(heroId);
+                  // Usa la función memorizada
                   const sources = getRecommendationSources(heroId, getTeamPicks(userTeam));
                   return hero && (
                     <div key={heroId} className="flex flex-col items-center">
                       <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
-                        <img 
+                        <img
                           src={`/heroesImg/${hero.id}.png`}
                           alt={hero.englishName}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="mt-1 text-xs text-gray-300 text-center">
-                        {language==='eng'?<div>{hero.englishName}</div>:<div>{hero.chineseName}</div>}
+                        {language === 'eng' ? <div>{hero.englishName}</div> : <div>{hero.chineseName}</div>}
                         <div className="text-green-400">
                           {language === 'eng' ? `With ${sources.join(', ')}` : `和${sources.join(', ')}配合`}
                         </div>
@@ -541,37 +544,10 @@ const GameBanPickPanel = ({ phases }: { phases: Phase[] }) => {
               </div>
             </div>
 
-            {/* <div>
-				<h3 className="text-blue-400 font-bold mb-2">被克制</h3>
-				<div className="grid grid-cols-3 gap-2">
-					{getRecommendations().counters.map(heroId => {
-					const hero = getHeroById(heroId);
-					const sources = getRecommendationSources(heroId, getTeamPicks(userTeam));
-					return hero && (
-						<div key={heroId} className="flex flex-col items-center">
-						<div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
-							<img 
-							src={`/heroesImg/${hero.id}.png`}
-							alt={hero.englishName}
-							className="w-full h-full object-cover"
-							/>
-						</div>
-						<div className="mt-1 text-xs text-gray-300 text-center">
-							<div>{hero.chineseName}</div>
-							<div className="text-blue-400">
-							被{sources.join(', ')}克制
-							</div>
-						</div>
-						</div>
-					);
-					})}
-				</div>
-				</div> */}
-
           </div>
         ) : (
           <div className="text-gray-400">
-				Select heroes to see recommendations
+            Select heroes to see recommendations
           </div>
         )}
       </div>
