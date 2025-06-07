@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/gamebanpickpanel.tsx","./src/components/greatbuild.tsx","./src/components/herolist.tsx","./src/pages/dashboard.tsx","./src/routes/approutes.tsx"],"errors":true,"version":"5.6.3"}
