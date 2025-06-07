@@ -1,4 +1,8 @@
-const HeroList = [
+// src/components/HeroList.tsx
+import React from 'react';
+
+// TU ARRAY DE HEROES (lo renombramos para evitar confusión con el componente)
+export const heroListData = [ // Exportación nombrada para el array de datos
   {
     id: 1,
     englishName: "Agudo",
@@ -1084,4 +1088,58 @@ const HeroList = [
     beCountered:[]
   },
 ];
-export default HeroList;
+// Definiciones de tipos para el componente si lo vas a usar
+interface Hero { // Esta interface ya la tienes en GameBanPickPanel, pero es buena idea tenerla aquí si el componente la usa
+  id: number;
+  chineseName: string;
+  englishName: string;
+  occupation: string;
+  altOccupation?: string;
+  combo?: number[];
+  counter?: number[];
+  beCountered?: number[];
+}
+
+interface HeroListProps {
+    heroes: Hero[]; // Recibe el array de héroes
+    onHeroSelect: (heroId: number) => void;
+    isHeroDisabled: (heroId: number) => boolean;
+    language: 'eng' | 'zh';
+}
+
+// El componente React que renderiza la lista de héroes (exportación por defecto)
+const HeroListComponent: React.FC<HeroListProps> = ({ heroes, onHeroSelect, isHeroDisabled, language }) => {
+    return (
+        <div className="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 p-2">
+            {heroes.map(hero => (
+                <div
+                    key={hero.id}
+                    className={`
+                        flex flex-col items-center justify-start cursor-pointer p-1 rounded-lg
+                        transition-all duration-200
+                        ${isHeroDisabled(hero.id)
+                            ? 'opacity-30 cursor-not-allowed filter grayscale' // Añadimos grayscale para más efecto de deshabilitado
+                            : 'hover:bg-gray-700/50 hover:scale-105' // Efecto hover más pronunciado
+                        }
+                    `}
+                    onClick={() => !isHeroDisabled(hero.id) && onHeroSelect(hero.id)}
+                >
+                    {/* Contenedor de la imagen para asegurar el tamaño y la forma circular */}
+                    <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden border-2 border-gray-600 shadow-md transform group-hover:scale-105 transition-transform duration-200">
+                        <img
+                            src={`/heroesImg/${hero.id}.png`} // Asegúrate de que esta ruta sea correcta
+                            alt={language === 'eng' ? hero.englishName : hero.chineseName}
+                            className="w-full h-full object-cover" // La imagen ocupa todo el contenedor circular
+                        />
+                    </div>
+                    {/* Texto del nombre debajo de la imagen */}
+                    <span className="text-xs md:text-sm mt-2 text-white text-center font-medium truncate w-full px-1">
+                        {language === 'eng' ? hero.englishName : hero.chineseName}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+export default HeroListComponent;
