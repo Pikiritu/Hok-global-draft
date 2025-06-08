@@ -1,5 +1,5 @@
 // src/pages/Dashboard.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import GameBanPickPanel from '../components/GameBanPickPanel';
 
 // Definiciones de tipos (asegúrate de que estas también estén en tu archivo)
@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
 
   // Ambas variables de fases ahora usan la misma lista para consistencia
   const normalPhases = commonPhases;
-  const matchPhases = commonPhases;
+  //const matchPhases = commonPhases;
 
   // =====================================================================
   // ESTADOS NUEVOS Y CRÍTICOS para manejar el sistema BO3/BO5 y el final del draft

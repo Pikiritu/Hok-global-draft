@@ -1,6 +1,6 @@
 // src/components/GameBanPickPanel.tsx
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import HeroListComponent, { heroListData } from './HeroList';
+import { heroListData } from './HeroList';
 
 // Type definitions (manteniendo los tuyos y añadiendo los nuevos)
 interface Hero {
@@ -116,12 +116,21 @@ const GameBanPickPanel = ({
     const { team, action } = currentAction;
 
     // Verificar si el héroe ya está globalmente baneado o pickeado
-    const isGloballySelected = (id: number) =>
-      globalBannedPicks.blueBans.includes(id) ||
-      globalBannedPicks.redBans.includes(id) ||
-      globalBannedPicks.bluePicks.includes(id) ||
-      globalBannedPicks.redPicks.includes(id);
+    const isGloballySelected = (id: number): boolean => {
+  const { team, action } = phases[currentPhase];
 
+  // Para los bans, siempre aplica para ambos equipos
+  if (action === 'ban') {
+    return globalBannedPicks.blueBans.includes(id) || globalBannedPicks.redBans.includes(id);
+  }
+
+  // Para picks, solo se bloquean los héroes ya pickeados globalmente por el MISMO equipo
+  if (team === 'blue') {
+    return globalBannedPicks.bluePicks.includes(id);
+  } else {
+    return globalBannedPicks.redPicks.includes(id);
+  }
+};
     if (isGloballySelected(championId)) {
         console.warn(`Hero ${championId} is already globally banned/picked.`);
         return; // No permitir selección si ya está globalmente inhabilitado
@@ -266,19 +275,27 @@ const GameBanPickPanel = ({
 
 
   const isChampionSelected = (championId: number): boolean => {
-    // Un héroe está 'seleccionado' si está en la ronda actual o en el estado global
-    const allSelected = [
-      ...selectedHeroes.blueBans,
-      ...selectedHeroes.redBans,
-      ...selectedHeroes.bluePicks,
-      ...selectedHeroes.redPicks,
-      ...globalBannedPicks.blueBans, // Global bans
-      ...globalBannedPicks.redBans,  // Global bans
-      ...globalBannedPicks.bluePicks, // Global picks
-      ...globalBannedPicks.redPicks  // Global picks
-    ];
-    return allSelected.includes(championId);
-  };
+  // ⚠️ Evita crash si currentPhase está fuera de rango
+  if (currentPhase >= phases.length) return true;
+
+  const { team } = phases[currentPhase];
+
+  const isBanned = 
+    selectedHeroes.blueBans.includes(championId) ||
+    selectedHeroes.redBans.includes(championId) ||
+    globalBannedPicks.blueBans.includes(championId) ||
+    globalBannedPicks.redBans.includes(championId);
+
+  const isPickedInThisRound = 
+    selectedHeroes.bluePicks.includes(championId) ||
+    selectedHeroes.redPicks.includes(championId);
+
+  const isGloballyPickedBySameTeam = team === 'blue'
+    ? globalBannedPicks.bluePicks.includes(championId)
+    : globalBannedPicks.redPicks.includes(championId);
+
+  return isBanned || isPickedInThisRound || isGloballyPickedBySameTeam;
+};
 
   const getCurrentActionText = (): string => {
     if (currentPhase >= phases.length) return 'Draft Complete - Waiting for next round...'; // Mensaje de finalización
