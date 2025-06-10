@@ -275,26 +275,36 @@ const GameBanPickPanel = ({
 
 
   const isChampionSelected = (championId: number): boolean => {
-  // ⚠️ Evita crash si currentPhase está fuera de rango
   if (currentPhase >= phases.length) return true;
 
-  const { team } = phases[currentPhase];
+  const { team, action } = phases[currentPhase];
 
-  const isBanned = 
+  // Bloqueo de bans hechos en esta ronda
+  const isBannedThisRound =
     selectedHeroes.blueBans.includes(championId) ||
-    selectedHeroes.redBans.includes(championId) ||
-    globalBannedPicks.blueBans.includes(championId) ||
-    globalBannedPicks.redBans.includes(championId);
+    selectedHeroes.redBans.includes(championId);
 
-  const isPickedInThisRound = 
+  // Bloqueo de picks hechos en esta ronda
+  const isPickedThisRound =
     selectedHeroes.bluePicks.includes(championId) ||
     selectedHeroes.redPicks.includes(championId);
 
+  // Bloqueo de picks globales del mismo equipo
   const isGloballyPickedBySameTeam = team === 'blue'
     ? globalBannedPicks.bluePicks.includes(championId)
     : globalBannedPicks.redPicks.includes(championId);
 
-  return isBanned || isPickedInThisRound || isGloballyPickedBySameTeam;
+  if (action === 'ban') {
+    // Durante ban, no puedes banear algo ya baneado o pickeado en esta misma ronda
+    return isBannedThisRound || isPickedThisRound;
+  }
+
+  if (action === 'pick') {
+    // Durante pick, no puedes pickear si fue baneado, pickeado en esta ronda, o pickeado por ti en rondas anteriores
+    return isBannedThisRound || isPickedThisRound || isGloballyPickedBySameTeam;
+  }
+
+  return false;
 };
 
   const getCurrentActionText = (): string => {
@@ -444,7 +454,7 @@ const GameBanPickPanel = ({
                 </div>
                 {/* Global Bans Display */}
                 <div>
-                  <h4 className="text-red-300 font-bold mb-2">{language === 'eng' ? 'Global Bans' : '全局禁用'}</h4>
+                  <h4 className="text-red-300 font-bold mb-2">{language === 'eng' ? '' : ''}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {globalBannedPicks.blueBans.map(id => {
                       const hero = getHeroById(id);
@@ -460,11 +470,11 @@ const GameBanPickPanel = ({
                 {/* Global Picks Display (if needed for visual feedback) */}
                  <div>
                   <h4 className="text-green-300 font-bold mb-2">{language === 'eng' ? 'Global Picks' : '全局选择'}</h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {globalBannedPicks.bluePicks.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
-                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-30">
+                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80">
                           <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
                         </div>)
                     })}
@@ -486,29 +496,37 @@ const GameBanPickPanel = ({
                       handleChampionClick(item.id);
                     }
                   }}
+                  className="flex flex-col items-center space-y-1 cursor-pointer"
+                  >
+                    <div
                   className={`
-            relative aspect-square w-[80px] overflow-hidden transition-all
+            relative w-[85px] h-[85px] transition-all
             ${isChampionSelected(item.id)
-                      ? 'opacity-50 cursor-not-allowed'
+                      ? 'opacity-10 cursor-not-allowed grayscale brightness-75'
                       : isUserTurn() && currentPhase < phases.length // Solo permite hover si es turno y no ha terminado
-                        ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500 bg-gray-700/50'
-                        : 'cursor-not-allowed bg-gray-900/50'
+                        ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500'
+                        : 'cursor-not-allowed '
                     }
             `}
                 >
                   <img
                     src={`/heroesImg/${item.id}.png`}
                     alt={language === 'eng' ? item.englishName : item.chineseName} // Usar language para alt
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-full border border-gray-600"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-1 px-2">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-white font-bold">
+                  {isChampionSelected(item.id) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                   <span className="text-red-500 text-4xl font-bold">×</span>
+                   </div>
+                 )}
+                 </div>
+                  
+                      <span className="text-xs text-white text-center font-semibold w-[56px] leading-tight">
                         {language === 'eng' ? item.englishName : item.chineseName}
                       </span>
                     </div>
-                  </div>
-                </div>
+                  
+                
               ))}
             </div>
 
@@ -559,7 +577,7 @@ const GameBanPickPanel = ({
                 </div>
                 {/* Global Bans Display */}
                 <div>
-                  <h4 className="text-red-300 font-bold mb-2">{language === 'eng' ? 'Global Bans' : '全局禁用'}</h4>
+                  <h4 className="text-red-300 font-bold mb-2">{language === 'eng' ? '' : ''}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {globalBannedPicks.redBans.map(id => {
                       const hero = getHeroById(id);
@@ -575,11 +593,11 @@ const GameBanPickPanel = ({
                 {/* Global Picks Display (if needed for visual feedback) */}
                 <div>
                   <h4 className="text-green-300 font-bold mb-2">{language === 'eng' ? 'Global Picks' : '全局选择'}</h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {globalBannedPicks.redPicks.map(id => {
                       const hero = getHeroById(id);
                       return hero && (
-                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-30">
+                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80">
                           <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
                         </div>)
                     })}

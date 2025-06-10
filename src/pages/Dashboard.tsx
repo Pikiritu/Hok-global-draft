@@ -103,7 +103,8 @@ const Dashboard: React.FC = () => {
       // Acumular los picks SOLO SI NO ES BO1
       if (bestOfType !== 'bo1') {
         setGlobalBannedPicks(prev => ({
-          ...prev,
+          blueBans: [], // NO acumular bans entre rondas
+          redBans: [],
           bluePicks: [...prev.bluePicks, ...picks.bluePicks],
           redPicks: [...prev.redPicks, ...picks.redPicks],
         }));
