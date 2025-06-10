@@ -927,13 +927,13 @@ export const heroListData = [ // Exportación nombrada para el array de datos
   },
   {
     id: 89,
-    englishName: "Fang",
-    chineseName: "李元芳",
-    imageLink: "/commons/images/c/cb/Li_Yuanfang_Hero_Icon.png",
-    occupation: "ADC",
+    englishName: "",
+    chineseName: "",
+    imageLink: "",
+    occupation: "",
     altOccupation: "",
-    counter:[73,35,11],
-    beCountered:[68]
+    counter:[],
+    beCountered:[]
   },
   {
     id: 90,

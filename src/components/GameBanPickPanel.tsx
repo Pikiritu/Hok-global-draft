@@ -68,7 +68,7 @@ const GameBanPickPanel = ({
   globalBannedPicks, // Recibimos los bans/picks globales
   onDraftComplete     // Recibimos el callback
 }: GameBanPickPanelProps) => { // Usamos la nueva interfaz de props
-  const [language, setLanguage] = useState<'eng' | 'zh'>('eng');
+  const [language, setLanguage] = useState<'esp' | 'zh' | 'eng'>('eng');
   const [userTeam, setUserTeam] = useState<'blue' | 'red'>('blue');
   const [currentPhase, setCurrentPhase] = useState<number>(0);
   const [selectedRole, setSelectedRole] = useState<string>('all');
@@ -89,7 +89,7 @@ const GameBanPickPanel = ({
     { id: 'ADC', name: '发育路', englishName: 'ADC' },
     { id: 'all', name: '所有', englishName: 'All' },
   ];
-
+  const roleOrder = ['ADC', 'Mid', 'Support', 'Jungla', 'Top'];
   const handleLanguage = () => {
     setLanguage(prevLanguage => (prevLanguage === 'eng' ? 'zh' : 'eng'));
   };
@@ -308,7 +308,7 @@ const GameBanPickPanel = ({
 };
 
   const getCurrentActionText = (): string => {
-    if (currentPhase >= phases.length) return 'Draft Complete - Waiting for next round...'; // Mensaje de finalización
+    if (currentPhase >= phases.length) return 'Draft Finalizado'; // Mensaje de finalización
     return phases[currentPhase]?.text || 'Loading Phase...';
   };
 
@@ -321,7 +321,7 @@ const GameBanPickPanel = ({
     if (currentPhase >= phases.length) return 'from-stone-900 to-stone-800';
     return phases[currentPhase]?.team === 'blue'
       ? 'from-slate-900 to-slate-800'
-      : 'from-rose-950 to-rose-900';
+      : 'from-rose-950 to-gray-900';
   };
 
   const filteredHeroes = useMemo(() => {
@@ -350,7 +350,23 @@ const GameBanPickPanel = ({
       })
       .filter((name): name is string => name !== null);
   }, [getHeroById, language]);
+  const getHeroesByRole = (ids: number[]) => {
+  const grouped: { [role: string]: typeof heroListData } = {};
+  
+  ids.forEach(id => {
+    const hero = getHeroById(id);
+    if (hero) {
+      const role = hero.occupation || 'Others';
+      if (!grouped[role]) grouped[role] = [];
+      grouped[role].push(hero as any);
 
+    }
+  });
+
+  return grouped;
+};
+const isBanPhase = phases[currentPhase]?.action === 'ban';
+const isPickPhase = phases[currentPhase]?.action === 'pick';
 
   return (
     <div className={`min-h-screen bg-gradient-to-b ${getBackgroundColor()} p-4 transition-all duration-500 w-[100vw] flex flex-row`}>
@@ -422,12 +438,12 @@ const GameBanPickPanel = ({
         <div className="flex gap-4">
           {/* Blue Team Side Panel */}
           <div className="w-32 space-y-4">
-            <div className="bg-blue-900/30 p-4 rounded">
+            <div className="bg-blue-900/30 p-4 rounded border-2 border-blue-500/40 shadow-sm">
               <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Blue Team' : '蓝方'}
               </h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans (Current Round)' : '禁用 (本轮)'}</h4>
+                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用 (本轮)'}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedHeroes.blueBans.map(id => {
                       const hero = getHeroById(id);
@@ -441,7 +457,7 @@ const GameBanPickPanel = ({
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks (Current Round)' : '选择 (本轮)'} </h4>
+                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks' : '选择 (本轮)'} </h4>
                   <div className="grid grid-cols-1 gap-2">
                     {selectedHeroes.bluePicks.map(id => {
                       const hero = getHeroById(id);
@@ -468,25 +484,42 @@ const GameBanPickPanel = ({
                   </div>
                 </div>
                 {/* Global Picks Display (if needed for visual feedback) */}
-                 <div>
-                  <h4 className="text-green-300 font-bold mb-2">{language === 'eng' ? 'Global Picks' : '全局选择'}</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {globalBannedPicks.bluePicks.map(id => {
-                      const hero = getHeroById(id);
-                      return hero && (
-                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80">
-                          <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
-                        </div>)
-                    })}
-                  </div>
+                <div>
+                  <h4 className="text-green-300 font-bold mb-2">
+                    {language === 'eng' ? 'Global Picks' : '全局选择'}
+                  </h4>
+                  {Object.entries(getHeroesByRole(globalBannedPicks.bluePicks))
+  .sort(([a], [b]) => roleOrder.indexOf(a) - roleOrder.indexOf(b))
+  .map(([role, heroes]) => (
+
+                    <div key={role} className="mb-3">
+                      <p className="text-xs text-white font-semibold mb-1">{role}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {heroes.map(hero => (
+                          <div
+                            key={hero.id}
+                            className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80"
+                          >
+                            <img
+                              src={`/heroesImg/${hero.id}.png`}
+                              alt={hero.englishName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-
           {/* Champion Grid */}
           <div className="flex-1">
-            <div className="grid grid-cols-9 gap-1">
+            <div className={`grid grid-cols-9 gap-1 p-2 rounded transition-all duration-300
+  ${isBanPhase ? 'bg-black-900/20 ring-2 ring-gray-500' : ''}
+  ${isPickPhase ? 'bg-black-900/20 ring-2 ring-orange-400' : ''}
+`}>
               {filteredHeroes.map(item => (
                 <div
                   key={item.id}
@@ -497,60 +530,58 @@ const GameBanPickPanel = ({
                     }
                   }}
                   className="flex flex-col items-center space-y-1 cursor-pointer"
-                  >
-                    <div
-                  className={`
-            relative w-[85px] h-[85px] transition-all
-            ${isChampionSelected(item.id)
-                      ? 'opacity-10 cursor-not-allowed grayscale brightness-75'
-                      : isUserTurn() && currentPhase < phases.length // Solo permite hover si es turno y no ha terminado
-                        ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500'
-                        : 'cursor-not-allowed '
-                    }
-            `}
                 >
-                  <img
-                    src={`/heroesImg/${item.id}.png`}
-                    alt={language === 'eng' ? item.englishName : item.chineseName} // Usar language para alt
-                    className="w-full h-full object-cover rounded-full border border-gray-600"
-                  />
-                  {isChampionSelected(item.id) && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                   <span className="text-red-500 text-4xl font-bold">×</span>
-                   </div>
-                 )}
-                 </div>
-                  
-                      <span className="text-xs text-white text-center font-semibold w-[56px] leading-tight">
-                        {language === 'eng' ? item.englishName : item.chineseName}
-                      </span>
-                    </div>
-                  
-                
+                  <div
+                    className={`
+                      relative w-[85px] h-[85px] transition-all
+                      ${isChampionSelected(item.id)
+                        ? 'opacity-10 cursor-not-allowed grayscale brightness-75'
+                        : isUserTurn() && currentPhase < phases.length // Solo permite hover si es turno y no ha terminado
+                          ? 'cursor-pointer hover:ring-2 hover:ring-yellow-500'
+                          : 'cursor-not-allowed '
+                      }
+                    `}
+                  >
+                    <img
+                      src={`/heroesImg/${item.id}.png`}
+                      alt={language === 'eng' ? item.englishName : item.chineseName} // Usar language para alt
+                      className="w-full h-full object-cover rounded-full border border-gray-600"
+                    />
+                    {isChampionSelected(item.id) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                        <span className="text-red-500 text-4xl font-bold">×</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-white text-center font-semibold w-[56px] leading-tight">
+                    {language === 'eng' ? item.englishName : item.chineseName}
+                  </span>
+                </div>
               ))}
             </div>
-
             {/* Current Phase Display */}
             <div className="mt-4 flex justify-center">
               <div className={`px-6 py-3 rounded-lg ${
-                phases[currentPhase]?.team === 'blue' ? 'bg-blue-900/30' : 'bg-red-900/30'
+                phases[currentPhase]?.team === 'blue' ? '' : ''
               }`}>
-                <span className="text-white font-bold">
-                  {currentPhase >= phases.length
-                    ? 'Draft Complete - Waiting for next round...' // Mensaje cuando el draft de la ronda termina
-                    : `${isUserTurn() ? 'Your' : 'Opponent\'s'} turn - ${getCurrentActionText()}`}
-                </span>
+                <span
+  className={`text-white font-bold text-xl uppercase px-4 py-2 rounded transition-all duration-300
+    ${phases[currentPhase]?.action === 'ban' 
+      ? 'bg-brown-600 animate-pulse ring-2 ring-brown-400' 
+      : ''}`}
+>
+  {phases[currentPhase]?.action === 'ban' ? '🚫 ' : ''}{getCurrentActionText()}
+</span>
               </div>
             </div>
           </div>
-
           {/* Red Team Side Panel */}
           <div className="w-32 space-y-4">
-            <div className="bg-rose-900/40 p-4 rounded">
+            <div className="bg-rose-900/40 p-4 rounded border-2 border-rose-500/40 shadow-sm">
               <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Red Team' : '红方'} </h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans (Current Round)' : '禁用 (本轮)'} </h4>
+                  <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用 (本轮)'} </h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedHeroes.redBans.map(id => {
                       const hero = getHeroById(id);
@@ -564,7 +595,7 @@ const GameBanPickPanel = ({
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks (Current Round)' : '选择 (本轮)'} </h4>
+                  <h4 className="text-green-500 font-bold mb-2">{language === 'eng' ? 'Picks' : '选择 (本轮)'} </h4>
                   <div className="grid grid-cols-1 gap-2">
                     {selectedHeroes.redPicks.map(id => {
                       const hero = getHeroById(id);
@@ -592,16 +623,30 @@ const GameBanPickPanel = ({
                 </div>
                 {/* Global Picks Display (if needed for visual feedback) */}
                 <div>
-                  <h4 className="text-green-300 font-bold mb-2">{language === 'eng' ? 'Global Picks' : '全局选择'}</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {globalBannedPicks.redPicks.map(id => {
-                      const hero = getHeroById(id);
-                      return hero && (
-                        <div key={id} className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80">
-                          <img src={`/heroesImg/${hero.id}.png`} alt={hero.englishName} className="w-full h-full object-cover" />
-                        </div>)
-                    })}
-                  </div>
+                  <h4 className="text-green-300 font-bold mb-2">
+                    {language === 'eng' ? 'Global Picks' : '全局选择'}
+                  </h4>
+                  {Object.entries(getHeroesByRole(globalBannedPicks.redPicks))
+    .sort(([a], [b]) => roleOrder.indexOf(a) - roleOrder.indexOf(b))
+    .map(([role, heroes]) => (
+                    <div key={role} className="mb-3">
+                      <p className="text-xs text-white font-semibold mb-1">{role}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {heroes.map(hero => (
+                          <div
+                            key={hero.id}
+                            className="aspect-square w-[48px] h-[48px] rounded-md border border-gray-400 opacity-80"
+                          >
+                            <img
+                              src={`/heroesImg/${hero.id}.png`}
+                              alt={hero.englishName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -618,7 +663,7 @@ const GameBanPickPanel = ({
           <div className="space-y-6">
             {recommendations.enemyBeCountered.length > 0 && (
               <div>
-                <h3 className="text-purple-400 font-bold mb-2">{language === 'eng' ? `Enemy is Countered By` : '对方英雄被以下英雄克制'}</h3>
+                <h3 className="text-purple-400 font-bold mb-2">{language === 'eng' ? `Enemigo contrarrestado por` : '对方英雄被以下英雄克制'}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {recommendations.enemyBeCountered.map(heroId => {
                     const hero = getHeroById(heroId);
@@ -648,7 +693,7 @@ const GameBanPickPanel = ({
 
             {recommendations.beCountered.length > 0 && (
               <div>
-                <h3 className="text-red-400 font-bold mb-2">{language === 'eng' ? 'We are Countered By' : '我方被以下英雄克制'}</h3>
+                <h3 className="text-red-400 font-bold mb-2">{language === 'eng' ? 'Cuidado con' : '我方被以下英雄克制'}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {recommendations.beCountered.map(heroId => {
                     const hero = getHeroById(heroId);
@@ -677,7 +722,7 @@ const GameBanPickPanel = ({
 
             {recommendations.combos.length > 0 && (
               <div>
-                <h3 className="text-green-400 font-bold mb-2">{language === 'eng' ? 'Combos & Synergies' : '好配合'}</h3>
+                <h3 className="text-green-400 font-bold mb-2">{language === 'eng' ? 'Combos y Sinergias' : '好配合'}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {recommendations.combos.map(heroId => {
                     const hero = getHeroById(heroId);
