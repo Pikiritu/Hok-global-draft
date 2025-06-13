@@ -124,8 +124,15 @@ const Dashboard: React.FC = () => {
   return (
     <div className='min-h-screen bg-gray-900'>
       <div className='flex justify-between items-center p-4 bg-blue-800 text-white flex-row'>
-        <h3>Honor of Kings Ban/Pick Simulator</h3>
+        <h3></h3>
         <div className='gap-4 flex flex-row'>
+          <div className="absolute top-1 right-0">
+    <img 
+      src="/heroesImg/cinnamoroll.png" 
+      alt="Cinnamoroll" 
+      className="w-16 h-16"
+    />
+  </div>
           {/* BOTONES PARA SELECCIONAR TIPO DE PARTIDA (BO1, BO3, BO5) */}
           <button
             className={`px-4 py-2 rounded transition-colors duration-300 ${bestOfType === 'bo1' ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}

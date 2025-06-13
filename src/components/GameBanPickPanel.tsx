@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { heroListData } from './HeroList';
 
+
 // Type definitions (manteniendo los tuyos y añadiendo los nuevos)
 interface Hero {
   id: number;
@@ -368,34 +369,67 @@ const GameBanPickPanel = ({
 const isBanPhase = phases[currentPhase]?.action === 'ban';
 const isPickPhase = phases[currentPhase]?.action === 'pick';
 
+// Primero define los estados al inicio de tu componente:
+
+const [savedCompositions, setSavedCompositions] = useState<number[][]>(() => {
+  const stored = localStorage.getItem('savedCompositions');
+  return stored ? JSON.parse(stored) : [];
+});
+const [currentPage, setCurrentPage] = useState(0);
+const compositionsPerPage = 5;
+
+// Leer localStorage al cargar
+useEffect(() => {
+  const stored = localStorage.getItem('savedCompositions');
+  if (stored) {
+    setSavedCompositions(JSON.parse(stored));
+  }
+}, []);
+
+// Guardar en localStorage cuando cambien
+useEffect(() => {
+  localStorage.setItem('savedCompositions', JSON.stringify(savedCompositions));
+}, [savedCompositions]);
+
+// Guardar composición
+const handleSaveComposition = () => {
+  const currentBluePicks = selectedHeroes.bluePicks;
+  if (currentBluePicks.length === 0) {
+    alert("Debes tener al menos 1 héroe seleccionado para guardar.");
+    return;
+  }
+  setSavedCompositions(prev => [...prev, currentBluePicks]);
+};
+
+// Borrar composición
+const handleDeleteComposition = (index: number) => {
+  setSavedCompositions(prev => prev.filter((_, i) => i !== index));
+};
+useEffect(() => {
+  const totalPages = Math.ceil(savedCompositions.length / compositionsPerPage);
+  if (currentPage >= totalPages) {
+    setCurrentPage(Math.max(0, totalPages - 1));
+  }
+}, [savedCompositions, currentPage, compositionsPerPage]);
+// Paginación
+const totalPages = Math.ceil(savedCompositions.length / compositionsPerPage);
+const paginatedCompositions = savedCompositions.slice(
+  currentPage * compositionsPerPage,
+  (currentPage + 1) * compositionsPerPage
+  
+);
   return (
     <div className={`min-h-screen bg-gradient-to-b ${getBackgroundColor()} p-4 transition-all duration-500 w-[100vw] flex flex-row`}>
       <div className='w-[80%]'>
         {/* Header Controls */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setUserTeam('blue')}
-              className={`px-4 py-2 rounded transition-colors duration-300 ${
-                userTeam === 'blue' ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
-              }`}
-            >
-              {language === 'eng' ? 'Blue Team' : '蓝色方'}
-            </button>
-            <button
-              onClick={() => setUserTeam('red')}
-              className={`px-4 py-2 rounded transition-colors duration-300 ${
-                userTeam === 'red' ? 'bg-red-500 text-white' : 'bg-gray-700 text-gray-300'
-              }`}
-            >
-              {language === 'eng' ? 'Red Team' : '红色方'}
-            </button>
+        <div className="flex justify-center items-center gap-4 mb-2 ">
+          <div className="flex justify-center gap-2 mt-2">
           </div>
           <div className="text-white text-xl font-bold">
             {getCurrentActionText()}
           </div>
-          <div className="flex gap-4">
-            <button className={`px-4 py-2 rounded transition-colors duration-300 bg-blue-600`} onClick={handleLanguage}> <span className={`${language === 'eng' ? 'text-black' : 'text-gray-700'}`}>English</span> / <span className={`${language === 'zh' ? 'text-black' : 'text-gray-700'}`}>中文</span></button>
+          <div className="flex gap-2">
+            <button className={`px-4 py-2 rounded transition-colors duration-300 bg-blue-600`} onClick={handleLanguage}> <span className={`${language === 'eng' ? 'text-black' : 'text-gray-700'}`}>中文</span><span className={`${language === 'zh' ? 'text-black' : 'text-gray-700'}`}></span></button>
 
             <button
               onClick={handleUndo}
@@ -403,20 +437,44 @@ const isPickPhase = phases[currentPhase]?.action === 'pick';
               className={`px-4 py-2 rounded transition-colors duration-300 ${
                 history.length > 0 && currentPhase < phases.length
                   ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-600 text-black-500 cursor-not-allowed'
               }`}
             >
-              {language === 'eng' ? 'Undo' : '撤销'}
+              {language === 'eng' ? 'Atrás' : '撤销'}
             </button>
             <button
               onClick={resetDraft} // Este botón ahora solo reinicia la ronda actual
               className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors duration-300"
             >
-              {language === 'eng' ? 'Reset Current Round' : '重置本轮'}
+              {language === 'eng' ? 'Reiniciar' : '重置本轮'}
             </button>
           </div>
+       
         </div>
+        {/* Botones de selección de equipo (independientes) */}
+   <div className="flex justify-end gap-2 mt-2">
+  <div>
+    <button
+      onClick={() => setUserTeam('blue')}
+      className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-300 shadow-md ${
+        userTeam === 'blue' ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
+      }`}
+    >
+      Blue
+    </button>
+  </div>
 
+  <div>
+    <button
+      onClick={() => setUserTeam('red')}
+      className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-300 shadow-md ${
+        userTeam === 'red' ? 'bg-red-500 text-white' : 'bg-gray-700 text-gray-300'
+      }`}
+    >
+      Red
+    </button>
+  </div>
+</div>
         {/* Role Filter Buttons */}
         <div className="flex justify-center gap-4 mb-4">
           {roles.map(role => (
@@ -437,9 +495,61 @@ const isPickPhase = phases[currentPhase]?.action === 'pick';
         {/* Main Layout */}
         <div className="flex gap-4">
           {/* Blue Team Side Panel */}
+          <div className="absolute top-2 left-4 bg-gray-800/70 rounded-md p-2 w-[240px] z-50 shadow-md">
+  <div className="flex justify-between items-center mb-1">
+    <h3 className="text-white text-xs font-semibold">Composiciones</h3>
+    <button 
+      onClick={handleSaveComposition} 
+      className="bg-green-500 hover:bg-green-600 text-white px-1 py-[2px] rounded text-xs">
+      +
+    </button>
+  </div>
+
+  {paginatedCompositions.length === 0 ? (
+    <div className="text-gray-400 text-[10px]">Sin composiciones.</div>
+  ) : (
+    paginatedCompositions.map((comp, idx) => (
+      <div key={idx} className="flex items-center justify-between mb-1">
+        <div className="flex space-x-[2px]">
+          {comp.map(heroId => {
+            const hero = getHeroById(heroId);
+            return (
+              <img 
+                key={heroId} 
+                src={`/heroesImg/${hero?.id}.png`} 
+                alt={hero?.englishName} 
+                className="w-7 h-7 rounded border"
+              />
+            );
+          })}
+        </div>
+        <button 
+          onClick={() => handleDeleteComposition(idx + currentPage * compositionsPerPage)} 
+          className="text-red-400 text-xs ml-1 leading-none">
+          ✕
+        </button>
+      </div>
+    ))
+  )}
+
+  {/* Paginación */}
+  {totalPages > 1 && (
+    <div className="flex justify-center gap-1 mt-1">
+      {Array.from({ length: totalPages }, (_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={`px-1 text-xs rounded ${i === currentPage ? 'bg-blue-400' : 'bg-gray-600'}`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
           <div className="w-32 space-y-4">
             <div className="bg-blue-900/30 p-4 rounded border-2 border-blue-500/40 shadow-sm">
-              <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Blue Team' : '蓝方'}
+              <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Equipo Azul' : '蓝方'}
               </h3>
               <div className="space-y-4">
                 <div>
@@ -578,7 +688,7 @@ const isPickPhase = phases[currentPhase]?.action === 'pick';
           {/* Red Team Side Panel */}
           <div className="w-32 space-y-4">
             <div className="bg-rose-900/40 p-4 rounded border-2 border-rose-500/40 shadow-sm">
-              <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Red Team' : '红方'} </h3>
+              <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Equipo Rojo' : '红方'} </h3>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用 (本轮)'} </h4>
@@ -655,7 +765,7 @@ const isPickPhase = phases[currentPhase]?.action === 'pick';
       </div>
       {/* Recommendation Panel */}
       <div className="w-[260px] ml-auto mr-6 bg-gray-800/50 rounded-lg p-2">
-        <h2 className="text-white font-bold text-xl mb-4">Recommendations</h2>
+        <h2 className="text-white font-bold text-xl mb-4">Recommendaciones</h2>
         {(recommendations.combos.length > 0 ||
           recommendations.counters.length > 0 ||
           recommendations.beCountered.length > 0 ||
@@ -752,7 +862,7 @@ const isPickPhase = phases[currentPhase]?.action === 'pick';
           </div>
         ) : (
           <div className="text-gray-400">
-            Select heroes to see recommendations
+            Vacio
           </div>
         )}
       </div>
