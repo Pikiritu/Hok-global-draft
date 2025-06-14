@@ -10,8 +10,9 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     imageLink: "/commons/images/f/f8/Agudo_Hero_Icon.jpg",
     occupation: "Jungla",
     altOccupation: '',
-    counter:[50,66],
-    beCountered:[75,44]
+    counter:[50,66,9],
+    beCountered:[79,36,38],
+    combo:[100,94,25]
   },
   {
     id: 2,
@@ -32,8 +33,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     occupation: "Top",
     altOccupation: '',
     counter:[39,21,85],//黄忠，典韦
-    beCountered:[5,60],//被阿离，马可克制
-    combo:[23]
+    beCountered:[5,60,77,61,14],//被阿离，马可克制
+    combo:[23,51,46]
   },
   {
     id: 4,
@@ -53,8 +54,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     occupation: "ADC",
     altOccupation: '',
     counter:[75,31,71],
-    combo:[87,27,17],
-    beCountered:[25,6,27]//扁鹊，亚瑟
+    combo:[87,27,17,90,41,49],
+    beCountered:[25,6,27,24]//扁鹊，亚瑟
   },
   {
     id: 6,
@@ -97,7 +98,7 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     altOccupation: 'Top',
     counter:[],
     beCountered:[63,59,1,68,45],//不知火舞,宫本
-    combo:[27]//周瑜
+    combo:[27,23,61,3,60]//周瑜
   },
   {
     id: 10,
@@ -106,9 +107,9 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     imageLink: "/commons/images/1/12/Kuang_Tie_Hero_Icon.png",
     occupation: "Top",
     altOccupation: '',
-    combo:[72],
+    combo:[72,27],
     counter:[77],
-    beCountered:[21,9,26,55]
+    beCountered:[26,55,96]
   },
   {
     id: 11,
@@ -149,7 +150,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     occupation: "Top",
     altOccupation: '',
     counter:[77],
-    beCountered:[6,50]
+    beCountered:[6,50,38,30],
+    combo:[66,59]
   },
   {
     id: 15,
@@ -202,7 +204,7 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     occupation: "Top",
     altOccupation: '',
     counter:[77,94,28],
-    beCountered:[83,21,41],
+    beCountered:[83,41,26],
     combo:[97]
   },
   {
@@ -213,8 +215,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     occupation: "ADC",
     altOccupation: '',
     counter:[43],
-    beCountered:[42,28,31],
-    combo:[12]
+    beCountered:[42,28,31,36],
+    combo:[12,65]
   },
   {
     id: 21,
@@ -243,8 +245,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     imageLink: "/commons/images/4/43/Doria_Hero_Icon.jpg",
     occupation: "Support",
     altOccupation: '',
-    counter:[92,88],
-    combo:[9,26,75,88,68] //亚连，夏侯，婉儿，杨玉环
+    counter:[],
+    combo:[9,26,75,88,68,74,3,88] //亚连，夏侯，婉儿，杨玉环
   },
   {
     id: 24,
@@ -274,8 +276,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     imageLink: "/commons/images/5/56/Xiahou_Dun_Hero_Icon.png",
     occupation: "Jungla",
     altOccupation: 'Top',
-    combo:[23,78], //朵莉亚
-    counter:[32,30,10],
+    combo:[23,78,97], //朵莉亚
+    counter:[32,30,10,14],
     beCountered:[45,55,37]
   },
   {
@@ -285,8 +287,8 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     imageLink: "/commons/images/b/be/Shao_Siyuan_Hero_Icon.jpg",
     occupation: "Support",
     altOccupation: '',
-    counter:[5],
-    combo:[5,44]
+    counter:[5,59],
+    combo:[5,44,9]
   },
   {
     id: 28,

@@ -764,8 +764,8 @@ const paginatedCompositions = savedCompositions.slice(
         </div>
       </div>
       {/* Recommendation Panel */}
-      <div className="w-[260px] ml-auto mr-6 bg-gray-800/50 rounded-lg p-2">
-        <h2 className="text-white font-bold text-xl mb-4">Recommendaciones</h2>
+      <div className="w-[300px] ml-auto mr-2 bg-gray-800/50 rounded-lg p-1 h-[700px] overflow-y-auto">
+        <h2 className="text-white font-bold text-[10px] mb-1">Recomendaciones</h2>
         {(recommendations.combos.length > 0 ||
           recommendations.counters.length > 0 ||
           recommendations.beCountered.length > 0 ||
@@ -773,7 +773,7 @@ const paginatedCompositions = savedCompositions.slice(
           <div className="space-y-6">
             {recommendations.enemyBeCountered.length > 0 && (
               <div>
-                <h3 className="text-purple-400 font-bold mb-2">{language === 'eng' ? `Enemigo contrarrestado por` : '对方英雄被以下英雄克制'}</h3>
+                <h3 className="text-purple-200 font-bold mb-0">{language === 'eng' ? `Enemigo contrarrestado por` : '对方英雄被以下英雄克制'}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {recommendations.enemyBeCountered.map(heroId => {
                     const hero = getHeroById(heroId);
@@ -781,7 +781,7 @@ const paginatedCompositions = savedCompositions.slice(
                     const sources = getRecommendationSources(heroId, getTeamPicks(enemyTeam));
                     return hero && (
                       <div key={heroId} className="flex flex-col items-center">
-                        <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
+                        <div className="aspect-square w-[40px] bg-gray-700/50 rounded overflow-hidden">
                           <img
                             src={`/heroesImg/${hero.id}.png`}
                             alt={hero.englishName}
@@ -810,7 +810,7 @@ const paginatedCompositions = savedCompositions.slice(
                     const sources = getRecommendationSources(heroId, getTeamPicks(userTeam));
                     return hero && (
                       <div key={heroId} className="flex flex-col items-center">
-                        <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
+                        <div className="aspect-square w-[40px] bg-gray-700/50 rounded overflow-hidden">
                           <img
                             src={`/heroesImg/${hero.id}.png`}
                             alt={hero.englishName}
@@ -839,7 +839,7 @@ const paginatedCompositions = savedCompositions.slice(
                     const sources = getRecommendationSources(heroId, getTeamPicks(userTeam));
                     return hero && (
                       <div key={heroId} className="flex flex-col items-center">
-                        <div className="aspect-square w-[64px] bg-gray-700/50 rounded overflow-hidden">
+                        <div className="aspect-square w-[40px] bg-gray-700/50 rounded overflow-hidden">
                           <img
                             src={`/heroesImg/${hero.id}.png`}
                             alt={hero.englishName}
