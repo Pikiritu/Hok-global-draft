@@ -81,7 +81,7 @@ const GameBanPickPanel = ({
   });
   const [history, setHistory] = useState<HistoryState[]>([]);
   // const [resetCounter, setResetCounter] = useState(0); // Ya no es necesario aquí, Dashboard lo maneja con 'key'
-
+  
   const roles: Role[] = [
     { id: 'Jungla', name: '打野', englishName: 'Jungla' },
     { id: 'Top', name: '对抗路', englishName: 'Top' },
@@ -449,7 +449,7 @@ const paginatedCompositions = savedCompositions.slice(
               {language === 'eng' ? 'Reiniciar' : '重置本轮'}
             </button>
           </div>
-       
+          
         </div>
         {/* Botones de selección de equipo (independientes) */}
    <div className="flex justify-end gap-2 mt-2">
