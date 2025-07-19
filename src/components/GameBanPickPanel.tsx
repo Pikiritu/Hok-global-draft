@@ -60,6 +60,7 @@ interface GameBanPickPanelProps {
   phases: Phase[];
   globalBannedPicks: GlobalBanPickState; // Los bans y picks que persisten a lo largo de la serie
   onDraftComplete: (picks: { bluePicks: number[], redPicks: number[] }) => void; // Callback al finalizar el draft
+  
 }
 // =====================================================================
 
@@ -460,7 +461,7 @@ const paginatedCompositions = savedCompositions.slice(
         userTeam === 'blue' ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
       }`}
     >
-      Blue
+      Mi equipo
     </button>
   </div>
 
@@ -471,7 +472,7 @@ const paginatedCompositions = savedCompositions.slice(
         userTeam === 'red' ? 'bg-red-500 text-white' : 'bg-gray-700 text-gray-300'
       }`}
     >
-      Red
+      Oponente
     </button>
   </div>
 </div>
@@ -549,7 +550,7 @@ const paginatedCompositions = savedCompositions.slice(
 </div>
           <div className="w-32 space-y-4">
             <div className="bg-blue-900/30 p-4 rounded border-2 border-blue-500/40 shadow-sm">
-              <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Equipo Azul' : '蓝方'}
+              <h3 className="text-blue-400 font-bold mb-4">{language === 'eng' ? 'Mi equipo' : '蓝方'}
               </h3>
               <div className="space-y-4">
                 <div>
@@ -688,7 +689,7 @@ const paginatedCompositions = savedCompositions.slice(
           {/* Red Team Side Panel */}
           <div className="w-32 space-y-4">
             <div className="bg-rose-900/40 p-4 rounded border-2 border-rose-500/40 shadow-sm">
-              <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Equipo Rojo' : '红方'} </h3>
+              <h3 className="text-rose-300 font-bold mb-4">{language === 'eng' ? 'Oponente' : '红方'} </h3>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-red-500 font-bold mb-2">{language === 'eng' ? 'Bans' : '禁用 (本轮)'} </h4>

@@ -22,7 +22,7 @@ interface MatchResult {
 
 const Dashboard: React.FC = () => {
   const [startsFirst, setStartsFirst] = useState(true); // 👈 Nuevo estado: quién comienza
-
+  
   // Fases base
   const commonPhases: Phase[] = [
     { team: 'blue', action: 'ban', text: 'Blue Ban' },
@@ -186,6 +186,7 @@ const Dashboard: React.FC = () => {
         phases={phases}
         globalBannedPicks={globalBannedPicks}
         onDraftComplete={handleDraftComplete}
+        
       />
 
       {isDraftComplete && (

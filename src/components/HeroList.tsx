@@ -1089,6 +1089,39 @@ export const heroListData = [ // Exportación nombrada para el array de datos
     counter:[],
     beCountered:[]
   },
+  {
+    id: 104,
+    englishName: "Fatih",
+    chineseName: "Fatih",
+    imageLink: "/commons/images/3/33/Jiang_Ziya_Hero_Icon_2022.jpg",
+    occupation: "Top",
+    altOccupation: "Jungla",
+    combo:[],
+    counter:[],
+    beCountered:[]
+  },
+  {
+    id: 105,
+    englishName: "Flowborn Carry",
+    chineseName: "Flowborn Carry",
+    imageLink: "/commons/images/3/33/Jiang_Ziya_Hero_Icon_2022.jpg",
+    occupation: "ADC",
+    altOccupation: "",
+    combo:[],
+    counter:[],
+    beCountered:[]
+  },
+  {
+    id: 106,
+    englishName: "Flowborn Tank",
+    chineseName: "Flowborn Tank",
+    imageLink: "/commons/images/3/33/Jiang_Ziya_Hero_Icon_2022.jpg",
+    occupation: "Top",
+    altOccupation: "Jungla",
+    combo:[],
+    counter:[],
+    beCountered:[]
+  },
 ];
 // Definiciones de tipos para el componente si lo vas a usar
 interface Hero { // Esta interface ya la tienes en GameBanPickPanel, pero es buena idea tenerla aquí si el componente la usa
