@@ -82,7 +82,41 @@ const GameBanPickPanel = ({
   });
   const [history, setHistory] = useState<HistoryState[]>([]);
   // const [resetCounter, setResetCounter] = useState(0); // Ya no es necesario aquí, Dashboard lo maneja con 'key'
-  
+  // Exportar composiciones como archivo JSON
+const exportCompositions = () => {
+  const dataStr = JSON.stringify(savedCompositions, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'composiciones.json';
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+// Importar archivo JSON y cargarlo como composiciones
+const importCompositions = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const result = e.target?.result as string;
+      const importedData = JSON.parse(result);
+      if (Array.isArray(importedData)) {
+        setSavedCompositions(importedData);
+        localStorage.setItem('savedCompositions', JSON.stringify(importedData));
+        alert('Composiciones importadas correctamente.');
+      } else {
+        alert('Archivo inválido.');
+      }
+    } catch (error) {
+      alert('Error al importar el archivo.');
+    }
+  };
+  reader.readAsText(file);
+};
   const roles: Role[] = [
     { id: 'Jungla', name: '打野', englishName: 'Jungla' },
     { id: 'Top', name: '对抗路', englishName: 'Top' },
@@ -418,6 +452,7 @@ const paginatedCompositions = savedCompositions.slice(
   currentPage * compositionsPerPage,
   (currentPage + 1) * compositionsPerPage
   
+  
 );
   return (
     <div className={`min-h-screen bg-gradient-to-b ${getBackgroundColor()} p-4 transition-all duration-500 w-[100vw] flex flex-row`}>
@@ -494,6 +529,23 @@ const paginatedCompositions = savedCompositions.slice(
         </div>
 
         {/* Main Layout */}
+        <div className="flex gap-2 mt-4 justify-end">
+  <button
+    onClick={exportCompositions}
+    className="bg-yellow-500 text-white px-2 py-1 rounded text-sm hover:bg-yellow-600"
+  >
+    Exportar
+  </button>
+  <label className="bg-purple-500 text-white px-2 py-1 rounded text-sm hover:bg-purple-600 cursor-pointer">
+    Importar
+    <input
+      type="file"
+      accept=".json"
+      onChange={importCompositions}
+      className="hidden"
+    />
+  </label>
+</div>
         <div className="flex gap-4">
           {/* Blue Team Side Panel */}
           <div className="absolute top-2 left-4 bg-gray-800/70 rounded-md p-2 w-[240px] z-50 shadow-md">
